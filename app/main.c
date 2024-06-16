@@ -1,28 +1,28 @@
 #include <stdio.h>
 
-void remove_trailing_newline(char* str) {
-	int i = 0;
-	while (str[i] != '\n' && str[i] != '\0') {
-		i++;
-	}
-	if (str[i] == '\n') {
-		str[i] = '\0';
-	}
+void remove_trailing_newline(char *str) {
+    int i = 0;
+    while (str[i] != '\n' && str[i] != '\0') {
+        i++;
+    }
+    if (str[i] == '\n') {
+        str[i] = '\0';
+    }
 }
 
-
 int main() {
-	printf("$ ");
-	fflush(stdout);
+    while (1) {
+        printf("$ ");
+        fflush(stdout);
 
-	// Wait for user input
-	char input[100];
-	fgets(input, 100, stdin);
+        char input[100];
+        fgets(input, 100, stdin);
 
-	remove_trailing_newline(input);
+        remove_trailing_newline(input);
 
-	printf("%s: command not found\n", input);
-	fflush(stdout);
+        printf("%s: command not found\n", input);
+        fflush(stdout);
+    }
 
 	return 0;
 }
