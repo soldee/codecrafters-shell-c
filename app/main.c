@@ -63,7 +63,7 @@ int main() {
       } else if (strcmp(typeCommand, CMD_ECHO) == 0) {
         printf("%s %s\n", CMD_ECHO, MSG_BUILTIN);
       } else if (strcmp(typeCommand, CMD_TYPE) == 0) {
-        printf("%s%s\n", CMD_TYPE, MSG_BUILTIN);
+        printf("%s %s\n", CMD_TYPE, MSG_BUILTIN);
       } else {
         printf("%s: not found\n", typeCommand);
       }
