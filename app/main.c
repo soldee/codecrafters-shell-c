@@ -41,6 +41,9 @@ void get_file_from_path_env(char* file_name, char* abs_file_path_buffer, size_t 
   // get number of paths in path env variable and path env variable length
   int n_paths = 0;
   size_t i = 0;
+  if (path_original[0] != '\0') {
+    n_paths++;
+  }
   while (path_original[i]) {
     if (path_original[i] == PATH_SEP) {
       n_paths++;
