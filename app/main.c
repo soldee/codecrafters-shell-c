@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h> 
+#include <unistd.h>
 
 static const char CMD_EXIT[] = "exit";
 static const char CMD_ECHO[] = "echo";
@@ -31,22 +32,6 @@ void read_str_until_space(char *input, char *read) {
     read[i] = input[i];
     i++;
   }
-}
-
-
-int find_file_in_dir(char* dir_name, char *file_name) {
-  DIR *d;
-  struct dirent *dir;
-  d = opendir(dir_name);
-  if (d) {
-    while ((dir = readdir(d)) != NULL) {
-      if (strcmp(file_name, dir->d_name) == 0) {
-        return 0;
-      }
-    }
-    closedir(d);
-  }
-  return -1;
 }
 
 
@@ -85,19 +70,22 @@ void get_file_from_path_env(char* file_name, char* abs_file_path_buffer, size_t 
   
   // iterate array and find the file in each of the paths
   for (size_t i=0; i < path_counter; i++) {
-    if (pathsarr[i][0] != '\0' && find_file_in_dir(pathsarr[i], file_name) == 0) {
-
+    if (pathsarr[i][0] != '\0') {
       char last_char = pathsarr[i][strlen(pathsarr[i])-1];
       if (last_char != PATH_SLASH) {
         snprintf(abs_file_path_buffer, buffer_size, "%s%c%s", pathsarr[i], PATH_SLASH, file_name);
-        return;
+        if (access(abs_file_path_buffer, X_OK) == 0) {
+          return; 
+        }
       } else {
         snprintf(abs_file_path_buffer, buffer_size, "%s%s", pathsarr[i], file_name);
-        return;
+        if (access(abs_file_path_buffer, X_OK) == 0) {
+          return; 
+        }
       }
-
     }
   }
+  abs_file_path_buffer[0] = '\0';
 }
 
 int main() {
