@@ -4,10 +4,6 @@
 #include <dirent.h> 
 #include <unistd.h>
 
-static const char CMD_EXIT[] = "exit";
-static const char CMD_ECHO[] = "echo";
-static const char CMD_TYPE[] = "type";
-
 static const char MSG_BUILTIN[] = "is a shell builtin";
 
 static const char PATH_SEP = ':';
@@ -25,15 +21,6 @@ void remove_trailing_newline(char *str) {
     str[i] = '\0';
   }
 }
-
-void read_str_until_space(char *input, char *read) {
-  int i = 0;
-  while (input[i] != ' ' && input[i] != '\0') {
-    read[i] = input[i];
-    i++;
-  }
-}
-
 
 void get_file_from_path_env(char* file_name, char* abs_file_path_buffer, size_t buffer_size) {
   const char* path_original = getenv("PATH");
@@ -99,6 +86,7 @@ int main() {
     printf("$ ");
     fflush(stdout);
 
+    char input_orig[100];
     char input[100];
     fgets(input, 100, stdin);
 
@@ -108,29 +96,32 @@ int main() {
       continue;
     }
 
-    char *cmd;
-    cmd = strtok(input, " ");
-
-    if (strcmp(cmd, CMD_EXIT) == 0) {
+    strcpy(input_orig, input);
+    
+    if (strncmp(input, "exit", 4) == 0) {
       char *exit_code_str;
+      strtok(input, " ");
       exit_code_str = strtok(NULL, " ");
       int exit_code = atoi(exit_code_str);  // atoi returns 0 if an invalid string is returned
       return exit_code;
 
-    } else if (strcmp(cmd, CMD_ECHO) == 0) {
-        char* echoString = input; 
-        echoString += 5; // add len("echo ") to pointer
-        printf("%s\n", echoString);
+    } else if (strncmp(input, "echo", 4) == 0) {
+      char* echoString = input; 
+      echoString += 5; // add len("echo ") to pointer
+      while (*echoString != '\0' && *echoString == ' ') {
+        echoString += 1;
+      }
+      printf("%s\n", echoString);
 
-    } else if (strcmp(cmd, CMD_TYPE) == 0) {
+    } else if (strncmp(input, "type", 4) == 0) {
       char *typeCommand;
+      strtok(input, " ");
       typeCommand = strtok(NULL, " ");
-      if (strcmp(typeCommand, CMD_EXIT) == 0) {
-        printf("%s %s\n", CMD_EXIT, MSG_BUILTIN);
-      } else if (strcmp(typeCommand, CMD_ECHO) == 0) {
-        printf("%s %s\n", CMD_ECHO, MSG_BUILTIN);
-      } else if (strcmp(typeCommand, CMD_TYPE) == 0) {
-        printf("%s %s\n", CMD_TYPE, MSG_BUILTIN);
+      
+      if (strcmp(typeCommand, "exit") == 0 
+        || strcmp(typeCommand, "echo") == 0 
+        || strcmp(typeCommand, "type") == 0) {
+        printf("%s %s\n", typeCommand, MSG_BUILTIN);
       } else {
         get_file_from_path_env(typeCommand, executable_abs_path, MAX_PATH_LEN);
         if (executable_abs_path[0] == '\0') {
@@ -142,8 +133,9 @@ int main() {
       }
 
     } else {
-        printf("%s: command not found\n", input);
-        fflush(stdout);
+      char* cmd = strtok(input, " ");
+      printf("%s: command not found\n", cmd);
+      fflush(stdout);
     }
   }
   
