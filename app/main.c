@@ -3,13 +3,17 @@
 #include <string.h>
 #include <dirent.h> 
 #include <unistd.h>
+#include <sys/wait.h>
+
 
 static const char MSG_BUILTIN[] = "is a shell builtin";
 
 static const char PATH_SEP = ':';
 static const char PATH_SLASH = '/';
 
+static const int MAX_INPUT_LEN = 100;
 static const int MAX_PATH_LEN = 260;
+static const int MAX_ARGV_LEN = 10;
 
 
 void remove_trailing_newline(char *str) {
@@ -78,6 +82,29 @@ void get_file_from_path_env(char* file_name, char* abs_file_path_buffer, size_t 
   abs_file_path_buffer[0] = '\0';
 }
 
+int execute_program(char *executable_path, char **args) {
+  int status;
+  pid_t pid = fork();
+
+  if (pid < 0) {
+    perror("Fork failed when executing");
+    return -1;
+  } 
+  else if (pid == 0) { //child process
+    if (-1 == execv(executable_path, args)) {
+      perror("failed execv");
+      exit(1);
+    }
+  }
+  else {
+    while (0 == waitpid(pid, &status, 0)) {
+      sleep(.1);
+    }
+  }
+  return 0;
+}
+
+
 int main() {
   char executable_abs_path[MAX_PATH_LEN];
   executable_abs_path[0] = '\0';
@@ -86,8 +113,8 @@ int main() {
     printf("$ ");
     fflush(stdout);
 
-    char input_orig[100];
-    char input[100];
+    char input_orig[MAX_INPUT_LEN];
+    char input[MAX_INPUT_LEN];
     fgets(input, 100, stdin);
 
     remove_trailing_newline(input);
@@ -133,10 +160,36 @@ int main() {
       }
 
     } else {
+      char* argv[MAX_ARGV_LEN];
+      
       char* cmd = strtok(input, " ");
-      printf("%s: command not found\n", cmd);
-      fflush(stdout);
+
+      get_file_from_path_env(cmd, executable_abs_path, MAX_PATH_LEN);
+      if (executable_abs_path[0] == '\0') {
+        printf("%s: command not found\n", cmd);
+      } else {
+        argv[0] = cmd;
+        
+        char* arg;
+        int i = 1;
+        while (NULL != (arg = strtok(NULL, " "))) {
+          if (i < MAX_ARGV_LEN) {
+            argv[i] = arg;
+          }
+          i++;
+        }
+        if (i < MAX_ARGV_LEN) {
+          argv[i+1] = NULL;
+          execute_program(executable_abs_path, argv);
+        }
+        else {
+          printf("Max numer of arguments is %d, provided %d\n", MAX_ARGV_LEN, i);
+        }
+      }
+      executable_abs_path[0] = '\0';
     }
+
+    fflush(stdout);
   }
   
   return 0;
